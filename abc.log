@@ -1,0 +1,24 @@
+2019-10-15 15:24:35,494-INFO:Getting config detail
+2019-10-15 15:24:35,495-INFO:Opening chrome browser
+2019-10-15 15:24:37,794-INFO:Gettting all repos from github
+2019-10-15 15:24:40,008-INFO:Getting exist job in jenkins
+2019-10-15 15:24:40,259-INFO:Thread <Thread(Thread-1, started 4960)> for job FifthProject started
+2019-10-15 15:24:40,261-INFO:Thread <Thread(Thread-2, started 9416)> for job FourthProject started
+2019-10-15 15:24:40,776-INFO:Thread <Thread(Thread-3, started 7940)> for job Hello_World started
+2019-10-15 15:24:41,028-INFO:Thread <Thread(Thread-4, started 10936)> for job SecondProject started
+2019-10-15 15:24:41,489-INFO:Thread <Thread(Thread-5, started 4940)> for job seven_project started
+2019-10-15 15:24:41,658-INFO:Thread <Thread(Thread-6, started 3196)> for job Six-Project started
+2019-10-15 15:24:42,056-INFO:Thread <Thread(Thread-7, started 9368)> for job ThirdProject started
+2019-10-15 15:24:42,056-INFO:Calculating the build_result of all the Job's
+2019-10-15 15:24:44,057-INFO:Calculating the build_result of all the Job's
+2019-10-15 15:24:46,057-INFO:Calculating the build_result of all the Job's
+2019-10-15 15:24:48,058-INFO:Calculating the build_result of all the Job's
+2019-10-15 15:24:50,192-INFO:Calculating the build_result of all the Job's
+2019-10-15 15:24:52,196-INFO:Calculating the build_result of all the Job's
+2019-10-15 15:24:54,196-INFO:Calculating the build_result of all the Job's
+2019-10-15 15:24:56,197-INFO:Calculating the build_result of all the Job's
+2019-10-15 15:24:58,198-INFO:Final Build Results
+2019-10-15 15:24:58,198-INFO:{'FifthProject': {'time': '15:10:2019 15:24:50', 'build_no': 69, 'result': 'SUCCESS'}, 'FourthProject': {'time': '15:10:2019 15:24:50', 'build_no': 65, 'result': 'SUCCESS'}, 'SecondProject': {'time': '15:10:2019 15:24:50', 'build_no': 65, 'result': 'SUCCESS'}, 'seven_project': {'time': '15:10:2019 15:24:53', 'build_no': 65, 'result': 'SUCCESS'}, 'Hello_World': {'time': '15:10:2019 15:24:55', 'build_no': 86, 'result': 'FAILURE'}, 'Six-Project': {'time': '15:10:2019 15:24:56', 'build_no': 65, 'result': 'SUCCESS'}, 'ThirdProject': {'time': '15:10:2019 15:24:56', 'build_no': 65, 'result': 'SUCCESS'}}
+2019-10-15 15:24:58,198-INFO: !!! Updating data in the database !!! 
+2019-10-15 15:24:58,239-INFO: !!! Hurra !!! @@@ Data Updated Succcessfully @@@
+2019-10-15 15:24:58,239-INFO: !!! Sending emails !!! 
