@@ -1,3 +1,4 @@
+import calendar
 
 import ec as ec
 import requests
@@ -23,6 +24,9 @@ import threading
 
 class Jenkins_Automation:
 
+    repo_list = []
+    exist_job = []
+
     def __init__(self):
         self.logger = self.logging_info()
         self.logger.info('Getting config detail')
@@ -33,23 +37,19 @@ class Jenkins_Automation:
         self.url = self.jenkins_dict['url']
         self.logger.info("Opening chrome browser")
         self.browser = webdriver.Chrome(executable_path='D:\chromedriver_win32\chromedriver')
-        #self.wait = WebDriverWait(self.browser, 3);
         self.jenkins_username = self.jenkins_dict['username']
         self.jenkins_password = self.jenkins_dict['password']
         self.jenkins_server = jenkins.Jenkins(self.url, username=self.jenkins_username, password=self.jenkins_password)
 
     def logging_info(self):
-        print("Inside logging method")
-        #logging.basicConfig(filename='abc.log', format='%(asctime) %(msg)')
         logger = logging.getLogger('demologger')
         logger.setLevel(logging.INFO)
         #create console and file handler
         consoleHandler = logging.StreamHandler()
         fileHandler = logging.FileHandler('abc.log', mode='w')
         #set level
-        #self.logger.setLevel(logging.DEBUG)
         consoleHandler.setLevel(logging.INFO)
-        #fileHandler.setLevel(logging.INFO)
+        fileHandler.setLevel(logging.INFO)
         #set format
         formatter = logging.Formatter('%(asctime)s-%(levelname)s:%(msg)s')
         consoleHandler.setFormatter(formatter)
@@ -60,8 +60,9 @@ class Jenkins_Automation:
         return logger
 
     def get_all_repos(self):
+        self.login_jenkins()
         self.logger.info("Gettting all repos from github")
-        self.repo_list = []
+        #self.repo_list = []
         git_api = "https://api.github.com/users/Terralogic-Sarosh/repos"
         try:
             response = requests.get(git_api)
@@ -71,7 +72,7 @@ class Jenkins_Automation:
         if response.ok:
             json_data = json.loads(response.content)
             for dict in json_data:
-                self.repo_list.append(dict['name'])
+                Jenkins_Automation.repo_list.append(dict['name'])
             print(self.repo_list)
             return self.repo_list
         else:
@@ -85,31 +86,23 @@ class Jenkins_Automation:
         self.browser.find_element_by_name('Submit').click()
 
     def get_existing_job(self):
-        exist_job = []
+        #exist_job = []
         self.logger.info("Getting exist job in jenkins")
         exist_job_data = self.jenkins_server.get_all_jobs()
         for data in exist_job_data:
-            exist_job.append(data['name'])
-        """total_rows = len(self.browser.find_elements_by_xpath('//*[@id="projectstatus"]/tbody/tr'))
-        print(total_rows)
-        for i in range(2, total_rows+1):
-        #a=self.browser.find_elements_by_xpath('''//*[@id='projectstatus'] //*[@class="model-link inside"]''')
-        #for i in a:
-            #print(i.text)
-            exist_job.append(self.browser.find_element_by_xpath('//*[@id="projectstatus"]/tbody/tr['+str(i)+']/td[3]').text)"""
-        print("exist_job ", exist_job)
-        return exist_job
+            Jenkins_Automation.exist_job.append(data['name'])
+        self.logger.info("Existing job in jenkins : {}".format(self.exist_job))
 
-    def create_new_job(self, exist_job):
-
+    def create_new_job(self):
+        self.get_all_repos()
+        self.get_existing_job()
         git_url = "https://github.com/Terralogic-Sarosh/"
         for repo in self.repo_list:
-            if repo in exist_job:
+            if repo in self.exist_job:
                 print('{} job already exist in Jenkins'.format(repo))
                 continue
             #selecting new job
             self.browser.find_element_by_xpath('//*[@id="tasks"]/div[1]/a[2]').click()
-            #self.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[@id="createItem"]/div[1]/div/label')))
             time.sleep(2)
             # creating jenkins job for each repo
             self.browser.find_element_by_name('name').send_keys(repo)
@@ -132,56 +125,43 @@ class Jenkins_Automation:
             #apply and save
             self.browser.find_element_by_id('yui-gen28-button').click()
             time.sleep(1)
-            self.browser.find_element_by_id('yui-gen39-button').click()
+            self.browser.find_element_by_id('yui-gen42-button').click()
             time.sleep(2)
             #back to the dashboard
             self.browser.find_element_by_xpath('//*[@id="tasks"]/div[1]/a[2]').click()
             time.sleep(2)
 
     def trigger_jenkin_job(self, job):
-        #self.build_result = {}
-        #for job in repo_list:
-        print("################# {} #################".format(job))
-        #job_info = self.jenkins_server.get_job_info(job)
-        #print('job_info ', job_info)
-        #builds = job_info['builds']
-        #print('builds ', builds)
-        #print('build no ', builds[0]['number'])
+
+        self.logger.info("################# {} #################".format(job))
         build_info = self.get_latest_build_info(job)
-        pre_timestamp = build_info['timestamp']
+        print("build info for {} job : ".format(job), build_info)
+        #for newly job who did not build once till now
+        if build_info == None:
+            pre_timestamp = int(datetime.now().timestamp() * 1000)
+            print("pre_timestamp {} for first build of job {} ".format(pre_timestamp, job))
+        else:
+            pre_timestamp = build_info['timestamp']
+        #current_timestampt_1 = datetime.now().timestamp()
+        #print("########### current_timestampt_1 #####################", current_timestampt_1)
+        #current_timestampt_2 = time.time()
+        #print("########### current_timestampt_2 #####################", current_timestampt_2)
+        #current_timestampt_3 = calendar.timegm(time.gmtime())
+        #print("########### current_timestampt_3 #####################", current_timestampt_3)
+
         print("Triggering job for repo {}".format(job))
-        """try:
-            job_response = requests.post('http://127.0.0.1:8080/job/{}/build'.format(job), auth=('admin', '6f0538b3fb304d918a5c7d2675221c66'), verify=False)
-        except requests.exceptions.RequestException as error:
-            print(error)
-            sys.exit(1)
-        if job_response:
-            print("status code",job_response.status_code)
-            print(job_response.content)"""
         self.jenkins_server.build_job(job)
-        #self.build_result = {}
         self.get_build_result(job, pre_timestamp)
 
     def get_build_result(self, job, pre_timestamp):
-        #url = 'https://localhost:8080/job/Hello_World/lastBuild/api'
-        #data = requests.get(url, auth=('admin', '6f0538b3fb304d918a5c7d2675221c66'), verify=False)
-        #print("data", data)
-        #build_result = {}
-        #for job in repo_list:
-        #print("################# {} #################".format(job))
-        #job_info = self.jenkins_server.get_job_info(job)
-        #print('job_info ', job_info)
-        #builds = job_info['builds']
-        #print('builds ', builds)
-        #print('build no ', builds[0]['number'])
-        #build_info = self.jenkins_server.get_build_info(job, builds[0]['number'])
-        #pre_timestamp = build_info['timestamp']
-        #print('build_info', build_info)
         while(True):
-            #job_info = self.jenkins_server.get_job_info(job)
-            #builds = job_info['builds']
-            #build_info = self.jenkins_server.get_build_info(job, builds[0]['number'])
             build_info = self.get_latest_build_info(job)
+            print("build info in while for job {} : ".format(job), build_info)
+            #Condition for fist build of the job
+            if build_info == None:
+                self.logger.info("Getting build result for first build of job : {}".format(job))
+                time.sleep(2)
+                continue
             post_timestamp = build_info['timestamp']
             print("pre_timestamp %s post_timestamp %s"%(pre_timestamp, post_timestamp))
             if pre_timestamp == post_timestamp or build_info['building'] == True:
@@ -189,45 +169,29 @@ class Jenkins_Automation:
                 time.sleep(2)
             else:
                 break
-                """print('building', build_info['building'] == True)
-                if build_info['building'] == True:
-                    print("Waiting for build completion")
-                    continue"""
-                #print('Running....')
-                """if self.jenkins_server.get_job_info(job)['lastCompletedBuild']['number'] == \
-                        self.jenkins_server.get_job_info(job)['lastBuild']['number']:
-                    print("Last ID %s, Current ID %s" % (self.jenkins_server.get_job_info(job)['lastCompletedBuild']['number'],
-                                     l                    self.jenkins_server.get_job_info(job)['lastBuild']['number']))"""
         print('Stop....')
         now = datetime.now()
         current_time = now.strftime("%d:%m:%Y %H:%M:%S")
-        #print(build_info['number'])
-        #print(build_info['result'])
-        #print(build_info['timestamp'])
-        #job_info = self.jenkins_server.get_job_info(job)
-        #builds = job_info['builds']
-        #build_info = self.jenkins_server.get_build_info(job, builds[0]['number'])
-        #print(build_info)
         self.build_result[job] = {'time': current_time, 'build_no':build_info['number'], 'result':build_info['result']}
-        #print('build_result', self.build_result)
         return self.build_result
-        #self.update_data(build_results)
-        #self.send_mail(build_results)
 
     def get_latest_build_info(self, job):
         job_info = self.jenkins_server.get_job_info(job)
         builds = job_info['builds']
-        build_info = self.jenkins_server.get_build_info(job, builds[0]['number'])
-        return build_info
+        if len(builds) == 0:
+            return None
+        else:
+            build_info = self.jenkins_server.get_build_info(job, builds[0]['number'])
+            return build_info
 
     def trigger_job_and_get_build_result(self):
+        self.create_new_job()
         self.build_result = {}
         thread_list = ["t"+str(i) for i in range(len(self.repo_list))]
         print("thread_list", thread_list)
         i = 0
-        for job in repo_list:
+        for job in self.repo_list:
             thread_list[i] = threading.Thread(target=self.trigger_jenkin_job,args=(job,))
-            #threading.Thread.__init__(self)
             thread_list[i].start()
             self.logger.info("Thread {} for job {} started".format(thread_list[i], job))
             i += 1
@@ -243,16 +207,11 @@ class Jenkins_Automation:
         self.send_mail()
 
     def update_data(self):
-        self.build_result = {'FifthProject': {'time': '11:10:2019 17:44:28', 'build_no': 65, 'result': 'SUCCESS'}, 'FourthProject': {'time': '11:10:2019 17:44:28', 'build_no': 61, 'result': 'SUCCESS'}, 'SecondProject': {'time': '11:10:2019 17:44:29', 'build_no': 61, 'result': 'SUCCESS'}, 'seven_project': {'time': '11:10:2019 17:44:31', 'build_no': 61, 'result': 'SUCCESS'}, 'Six-Project': {'time': '11:10:2019 17:44:32', 'build_no': 61, 'result': 'SUCCESS'}, 'Hello_World': {'time': '11:10:2019 17:44:34', 'build_no': 82, 'result': 'FAILURE'}, 'ThirdProject': {'time': '11:10:2019 17:44:34', 'build_no': 61, 'result': 'SUCCESS'}}
+        #self.build_result = {'FifthProject': {'time': '11:10:2019 17:44:28', 'build_no': 65, 'result': 'SUCCESS'}, 'FourthProject': {'time': '11:10:2019 17:44:28', 'build_no': 61, 'result': 'SUCCESS'}, 'SecondProject': {'time': '11:10:2019 17:44:29', 'build_no': 61, 'result': 'SUCCESS'}, 'seven_project': {'time': '11:10:2019 17:44:31', 'build_no': 61, 'result': 'SUCCESS'}, 'Six-Project': {'time': '11:10:2019 17:44:32', 'build_no': 61, 'result': 'SUCCESS'}, 'Hello_World': {'time': '11:10:2019 17:44:34', 'build_no': 82, 'result': 'FAILURE'}, 'ThirdProject': {'time': '11:10:2019 17:44:34', 'build_no': 61, 'result': 'SUCCESS'}}
         self.logger.info(" !!! Updating data in the database !!! ")
         client = MongoClient('127.0.0.1', 27017)
         db = client.test
         print("update data ", db)
-        #collection = db.demo_collection
-        #print(collection)
-        #now = datetime.now()
-        #current_time = now.strftime("%d:%m:%Y %H:%M:%S")
-        #print(current_time)
         db.demo_collection.insert_one(self.build_result)
         print("id", id)
         inserted_data = list(db.demo_collection.find())
@@ -267,7 +226,7 @@ class Jenkins_Automation:
     def send_mail(self):
         self.logger.info(" !!! Sending emails !!! ")
         sender = 'sarosh32ahmad@gmail.com'
-        receiver = ['bayssarosh@gmail.com', 'suranjanbanerjee7@gmail.com']
+        receiver = ['bayssarosh@gmail.com']
         message = """From Person %s
         To: To Person %s
         MIME-Version: 1.0
@@ -278,7 +237,6 @@ class Jenkins_Automation:
         <h1>%s</h1>."""%(sender, receiver, self.build_result)
 
         message = 'Subject: {}\n\n{}'.format('Jenkins Build results', message)
-        #message = build_results
         print(message)
         try:
             smtpobj = smtplib.SMTP('smtp.gmail.com', 587)
@@ -303,12 +261,12 @@ class Jenkins_Automation:
 
 
 obj = Jenkins_Automation()
-repo_list =  obj.get_all_repos()
-obj.login_jenkins()
-exist_job = obj.get_existing_job()
-#obj.create_new_job(repo_list, exist_job)
+#repo_list =  obj.get_all_repos()
+#obj.login_jenkins()
+#exist_job = obj.get_existing_job()
+#obj.create_new_job()
 #build_results = obj.trigger_jenkin_job(repo_list)
-build_results = obj.trigger_job_and_get_build_result()
+obj.trigger_job_and_get_build_result()
 #build_results = {'FifthProject': {'time': '04:10:2019 12:28:40', 'build_no': 22, 'result': 'SUCCESS'}, 'FourthProject': {'time': '04:10:2019 12:28:40', 'build_no': 23, 'result': 'SUCCESS'}, 'Hello_World': {'time': '04:10:2019 12:28:41', 'build_no': 44, 'result': 'FAILURE'}, 'SecondProject': {'time': '04:10:2019 12:28:41', 'build_no': 23, 'result': 'SUCCESS'}, 'seven_project': {'time': '04:10:2019 12:28:41', 'build_no': 23, 'result': 'SUCCESS'}, 'Six-Project': {'time': '04:10:2019 12:28:41', 'build_no': 23, 'result': 'SUCCESS'}, 'ThirdProject': {'time': '04:10:2019 12:28:48', 'build_no': 23, 'result': None}}
 #build_results = obj.get_build_result(repo_list)
 #obj.update_data()
